@@ -1,4 +1,5 @@
 use std::net::UdpSocket;
+use nom::AsBytes;
 
 pub struct DNSHeader {
     id: u16,
@@ -35,6 +36,51 @@ impl DNSHeader {
     }
 }
 
+pub struct Question {
+    labels: Vec<String>,
+    qtype: u16,
+    qclass: u16,
+}
+
+impl Question {
+    pub fn deserialize(buffer: &[u8]) -> Question {
+        let mut pos = 0;
+        let mut labels = Vec::new();
+        loop {
+            let len = buffer[pos] as usize;
+            if len == 0 {
+                break;
+            }
+            let label = String::from_utf8_lossy(&buffer[pos + 1..pos + len + 1]);
+            labels.push(label.into_owned());
+            pos += len + 1;
+        }
+        pos += 1;
+        let qtype = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
+        pos += 2;
+        let qclass = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
+        return Question {
+            labels,
+            qtype,
+            qclass,
+        };
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        for label in &self.labels {
+            buffer.push(label.len() as u8);
+            buffer.extend_from_slice(label.as_bytes());
+        }
+        buffer.push(0);
+        buffer.push((self.qtype >> 8) as u8);
+        buffer.push(self.qtype as u8);
+        buffer.push((self.qclass >> 8) as u8);
+        buffer.push(self.qclass as u8);
+        return buffer.as_bytes().to_owned();
+    }
+}
+
 
 fn main() {
     println!("Logs from your program will appear here!");
@@ -52,11 +98,21 @@ fn main() {
         ra: 0,
         z: 0,
         rcode: 0,
-        qdcount: 0,
+        qdcount: 1,
         ancount: 0,
         nscount: 0,
         arcount: 0,
     };
+
+    let question = Question {
+        labels: vec!["google".to_owned(), "com".to_owned()],
+        qtype: 1,
+        qclass: 1,
+    };
+
+    let mut response = vec![];
+    response.extend_from_slice(&response_header.serialize());
+    response.extend_from_slice(&question.serialize());
 
     loop {
         match udp_socket.recv_from(&mut buf) {
@@ -64,7 +120,7 @@ fn main() {
                 let _received_data = String::from_utf8_lossy(&buf[0..size]);
                 println!("Received {} bytes from {}", size, source);
                 udp_socket
-                    .send_to(&response_header.serialize(), source)
+                    .send_to(&response, source)
                     .expect("Failed to send response");
             }
             Err(e) => {
