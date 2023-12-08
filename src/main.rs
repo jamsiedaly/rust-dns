@@ -110,14 +110,18 @@ fn main() {
         qclass: 1,
     };
 
-    let mut response = vec![];
-    response.extend_from_slice(&response_header.serialize());
-    response.extend_from_slice(&question.serialize());
-
     loop {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
-                let _received_data = String::from_utf8_lossy(&buf[0..size]);
+                let received_data = String::from_utf8_lossy(&buf[0..size]);
+
+                let question = Question::deserialize(&buf);
+
+                let mut response = vec![];
+                response.extend_from_slice(&response_header.serialize());
+                response.extend_from_slice(&question.serialize());
+
+
                 println!("Received {} bytes from {}", size, source);
                 udp_socket
                     .send_to(&response, source)
