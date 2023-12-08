@@ -104,18 +104,12 @@ fn main() {
         arcount: 0,
     };
 
-    let question = Question {
-        labels: vec!["google".to_owned(), "com".to_owned()],
-        qtype: 1,
-        qclass: 1,
-    };
-
     loop {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
                 let received_data = String::from_utf8_lossy(&buf[0..size]);
 
-                let question = Question::deserialize(&buf);
+                let question = Question::deserialize(&buf[12..size]);
 
                 let mut response = vec![];
                 response.extend_from_slice(&response_header.serialize());
