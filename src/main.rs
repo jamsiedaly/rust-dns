@@ -81,6 +81,39 @@ impl Question {
     }
 }
 
+pub struct ResourceRecord {
+    name: Vec<String>,
+    rtype: u16,
+    class: u16,
+    ttl: u32,
+    rdlength: u16,
+    rdata: Vec<u8>,
+}
+
+impl ResourceRecord {
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        for label in &self.name {
+            buffer.push(label.len() as u8);
+            buffer.extend_from_slice(label.as_bytes());
+        }
+        buffer.push(0);
+        buffer.push((self.rtype >> 8) as u8);
+        buffer.push(self.rtype as u8);
+        buffer.push((self.class >> 8) as u8);
+        buffer.push(self.class as u8);
+        buffer.push((self.ttl >> 24) as u8);
+        buffer.push((self.ttl >> 16) as u8);
+        buffer.push((self.ttl >> 8) as u8);
+        buffer.push(self.ttl as u8);
+        buffer.push((self.rdlength >> 8) as u8);
+        buffer.push(self.rdlength as u8);
+        buffer.extend_from_slice(&self.rdata);
+        return buffer;
+    }
+}
+
 
 fn main() {
     println!("Logs from your program will appear here!");
@@ -111,9 +144,19 @@ fn main() {
 
                 let question = Question::deserialize(&buf[12..size]);
 
+                let answer = ResourceRecord {
+                    name: question.labels.clone(),
+                    rtype: 1,
+                    class: 1,
+                    ttl: 0,
+                    rdlength: 4,
+                    rdata: vec![127, 0, 0, 1],
+                };
+
                 let mut response = vec![];
                 response.extend_from_slice(&response_header.serialize());
                 response.extend_from_slice(&question.serialize());
+                response.extend_from_slice(&answer.serialize());
 
 
                 println!("Received {} bytes from {}", size, source);
