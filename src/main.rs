@@ -121,43 +121,40 @@ fn main() {
     let udp_socket = UdpSocket::bind("127.0.0.1:2053").expect("Failed to bind to address");
     let mut buf = [0; 512];
 
-    let response_header = DNSHeader {
-        id: 1234,
-        qr: 1,
-        opcode: 0,
-        aa: 0,
-        tc: 0,
-        rd: 0,
-        ra: 0,
-        z: 0,
-        rcode: 0,
-        qdcount: 1,
-        ancount: 0,
-        nscount: 0,
-        arcount: 0,
-    };
-
     loop {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
-                let received_data = String::from_utf8_lossy(&buf[0..size]);
-
                 let question = Question::deserialize(&buf[12..size]);
 
                 let answer = ResourceRecord {
                     name: question.labels.clone(),
                     rtype: 1,
                     class: 1,
-                    ttl: 0,
+                    ttl: 60,
                     rdlength: 4,
-                    rdata: vec![127, 0, 0, 1],
+                    rdata: vec![8, 8, 8, 8],
+                };
+
+                let response_header = DNSHeader {
+                    id: 1234,
+                    qr: 1,
+                    opcode: 0,
+                    aa: 0,
+                    tc: 0,
+                    rd: 0,
+                    ra: 0,
+                    z: 0,
+                    rcode: 0,
+                    qdcount: 1,
+                    ancount: 1,
+                    nscount: 0,
+                    arcount: 0,
                 };
 
                 let mut response = vec![];
                 response.extend_from_slice(&response_header.serialize());
                 response.extend_from_slice(&question.serialize());
                 response.extend_from_slice(&answer.serialize());
-
 
                 println!("Received {} bytes from {}", size, source);
                 udp_socket
