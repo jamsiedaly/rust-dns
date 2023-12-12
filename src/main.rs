@@ -177,7 +177,7 @@ fn main() {
                     rd: request_header.rd,
                     ra: 0,
                     z: 0,
-                    rcode: 0,
+                    rcode: request_header.rcode,
                     qdcount: 1,
                     ancount: 1,
                     nscount: 0,
