@@ -174,7 +174,7 @@ fn main() {
                     opcode: request_header.opcode,
                     aa: 0,
                     tc: 0,
-                    rd: 0,
+                    rd: request_header.rd,
                     ra: 0,
                     z: 0,
                     rcode: 0,
