@@ -34,6 +34,37 @@ impl DNSHeader {
         buffer[11] = self.arcount as u8;
         return buffer;
     }
+
+    pub fn deserialize(buffer: &[u8]) -> DNSHeader {
+        let id = ((buffer[0] as u16) << 8) | buffer[1] as u16;
+        let qr = buffer[2] >> 7;
+        let opcode = (buffer[2] >> 3) & 0b1111;
+        let aa = (buffer[2] >> 2) & 0b1;
+        let tc = (buffer[2] >> 1) & 0b1;
+        let rd = buffer[2] & 0b1;
+        let ra = buffer[3] >> 7;
+        let z = (buffer[3] >> 4) & 0b111;
+        let rcode = buffer[3] & 0b1111;
+        let qdcount = ((buffer[4] as u16) << 8) | buffer[5] as u16;
+        let ancount = ((buffer[6] as u16) << 8) | buffer[7] as u16;
+        let nscount = ((buffer[8] as u16) << 8) | buffer[9] as u16;
+        let arcount = ((buffer[10] as u16) << 8) | buffer[11] as u16;
+        return DNSHeader {
+            id,
+            qr,
+            opcode,
+            aa,
+            tc,
+            rd,
+            ra,
+            z,
+            rcode,
+            qdcount,
+            ancount,
+            nscount,
+            arcount,
+        };
+    }
 }
 
 pub struct Question {
@@ -124,6 +155,8 @@ fn main() {
     loop {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, source)) => {
+                let request_header = DNSHeader::deserialize(&buf[..12]);
+
                 let question = Question::deserialize(&buf[12..size]);
 
                 let answer = ResourceRecord {
@@ -136,9 +169,9 @@ fn main() {
                 };
 
                 let response_header = DNSHeader {
-                    id: 1234,
+                    id: request_header.id,
                     qr: 1,
-                    opcode: 0,
+                    opcode: request_header.opcode,
                     aa: 0,
                     tc: 0,
                     rd: 0,
