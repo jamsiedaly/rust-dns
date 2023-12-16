@@ -161,8 +161,8 @@ fn main() {
 
                 let answer = ResourceRecord {
                     name: question.labels.clone(),
-                    rtype: 1,
-                    class: 1,
+                    rtype: question.qtype,
+                    class: question.qclass,
                     ttl: 60,
                     rdlength: 4,
                     rdata: vec![8, 8, 8, 8],
