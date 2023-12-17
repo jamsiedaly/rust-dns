@@ -74,10 +74,10 @@ pub struct Question {
 }
 
 impl Question {
-    pub fn deserialize(buffer: &[u8]) -> Vec<Question> {
+    pub fn deserialize(buffer: &[u8], qcount: u16) -> Vec<Question> {
         let mut pos = 0;
         let mut questions = Vec::new();
-        'question: loop {
+        for _ in 0..qcount {
             let mut labels = Vec::new();
             'label: loop {
                 let len = buffer[pos] as usize;
@@ -97,10 +97,6 @@ impl Question {
                 qtype,
                 qclass,
             });
-            pos += 2;
-            if pos >= buffer.len() {
-                break 'question;
-            }
         }
         return questions;
     }
@@ -165,7 +161,7 @@ fn main() {
             Ok((size, source)) => {
                 let request_header = DNSHeader::deserialize(&buf[..12]);
 
-                let questions = Question::deserialize(&buf[12..size]);
+                let questions = Question::deserialize(&buf[12..size], request_header.qdcount);
 
                 let answers = questions.iter().map(|question| {
                     ResourceRecord {
@@ -188,8 +184,8 @@ fn main() {
                     ra: 0,
                     z: 0,
                     rcode: 4,
-                    qdcount: 1,
-                    ancount: 1,
+                    qdcount: questions.len() as u16,
+                    ancount: answers.len() as u16,
                     nscount: 0,
                     arcount: 0,
                 };
