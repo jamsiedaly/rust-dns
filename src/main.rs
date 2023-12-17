@@ -74,27 +74,32 @@ pub struct Question {
 }
 
 impl Question {
-    pub fn deserialize(buffer: &[u8]) -> Question {
+    pub fn deserialize(buffer: &[u8]) -> Vec<Question> {
         let mut pos = 0;
-        let mut labels = Vec::new();
-        loop {
-            let len = buffer[pos] as usize;
-            if len == 0 {
-                break;
+        let mut questions = Vec::new();
+        'question: loop {
+            let mut labels = Vec::new();
+            'label: loop {
+                let len = buffer[pos] as usize;
+                if len == 0 {
+                    break 'label;
+                }
+                let label = String::from_utf8_lossy(&buffer[pos + 1..pos + len + 1]);
+                labels.push(label.into_owned());
+                pos += len + 1;
             }
-            let label = String::from_utf8_lossy(&buffer[pos + 1..pos + len + 1]);
-            labels.push(label.into_owned());
-            pos += len + 1;
+            pos += 1;
+            let qtype = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
+            pos += 2;
+            let qclass = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
+            questions.push(Question {
+                labels,
+                qtype,
+                qclass,
+            });
+            break 'question;
         }
-        pos += 1;
-        let qtype = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
-        pos += 2;
-        let qclass = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
-        return Question {
-            labels,
-            qtype,
-            qclass,
-        };
+        return questions;
     }
 
     pub fn serialize(&self) -> Vec<u8> {
@@ -157,16 +162,18 @@ fn main() {
             Ok((size, source)) => {
                 let request_header = DNSHeader::deserialize(&buf[..12]);
 
-                let question = Question::deserialize(&buf[12..size]);
+                let questions = Question::deserialize(&buf[12..size]);
 
-                let answer = ResourceRecord {
-                    name: question.labels.clone(),
-                    rtype: question.qtype,
-                    class: question.qclass,
-                    ttl: 60,
-                    rdlength: 4,
-                    rdata: vec![8, 8, 8, 8],
-                };
+                let answers = questions.iter().map(|question| {
+                    ResourceRecord {
+                        name: question.labels.clone(),
+                        rtype: question.qtype,
+                        class: question.qclass,
+                        ttl: 60,
+                        rdlength: 4,
+                        rdata: vec![8, 8, 8, 8],
+                    }
+                }).collect::<Vec<ResourceRecord>>();
 
                 let response_header = DNSHeader {
                     id: request_header.id,
@@ -186,8 +193,12 @@ fn main() {
 
                 let mut response = vec![];
                 response.extend_from_slice(&response_header.serialize());
-                response.extend_from_slice(&question.serialize());
-                response.extend_from_slice(&answer.serialize());
+                for question in questions.into_iter() {
+                    response.extend_from_slice(&question.serialize());
+                }
+                for answer in answers.into_iter() {
+                    response.extend_from_slice(&answer.serialize());
+                }
 
                 println!("Received {} bytes from {}", size, source);
                 udp_socket
