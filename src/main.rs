@@ -97,7 +97,10 @@ impl Question {
                 qtype,
                 qclass,
             });
-            break 'question;
+            pos += 2;
+            if pos >= buffer.len() {
+                break 'question;
+            }
         }
         return questions;
     }
