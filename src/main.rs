@@ -1,12 +1,12 @@
-use std::net::{IpAddr, UdpSocket};
-use std::str::FromStr;
 use clap::Parser;
 use nom::AsBytes;
+use std::net::{IpAddr, UdpSocket};
+use std::str::FromStr;
 
 pub struct DNSHeader {
     id: u16,
     qr: u8,
-    opcode:u8,
+    opcode: u8,
     aa: u8,
     tc: u8,
     rd: u8,
@@ -128,7 +128,6 @@ pub struct ResourceRecord {
 }
 
 impl ResourceRecord {
-
     pub fn serialize(&self) -> Vec<u8> {
         let mut buffer = Vec::new();
         for label in &self.name {
@@ -177,7 +176,6 @@ struct Resolver {
     port: u16,
 }
 
-
 fn main() {
     println!("Logs from your program will appear here!");
     let args = Args::parse();
@@ -196,16 +194,17 @@ fn main() {
 
                 let questions = Question::deserialize(&buf[12..size], request_header.qdcount);
 
-                let answers = questions.iter().map(|question| {
-                    ResourceRecord {
+                let answers = questions
+                    .iter()
+                    .map(|question| ResourceRecord {
                         name: question.labels.clone(),
                         rtype: question.qtype,
                         class: question.qclass,
                         ttl: 60,
                         rdlength: 4,
                         rdata: vec![8, 8, 8, 8],
-                    }
-                }).collect::<Vec<ResourceRecord>>();
+                    })
+                    .collect::<Vec<ResourceRecord>>();
 
                 let response_header = DNSHeader {
                     id: request_header.id,
