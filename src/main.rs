@@ -1,4 +1,6 @@
-use std::net::UdpSocket;
+use std::net::{IpAddr, UdpSocket};
+use std::str::FromStr;
+use clap::Parser;
 use nom::AsBytes;
 
 pub struct DNSHeader {
@@ -149,9 +151,39 @@ impl ResourceRecord {
     }
 }
 
+#[derive(Parser)]
+#[command(author, version, about)]
+struct Args {
+    resolver: String,
+}
+
+impl From<Args> for Resolver {
+    fn from(value: Args) -> Self {
+        let parts = value.resolver.split(":").collect::<Vec<&str>>();
+        if parts.len() == 2 {
+            return Resolver {
+                ip: IpAddr::from_str(parts[0]).expect("Failed to parse resolver IP"),
+                port: u16::from_str(parts[1]).expect("Failed to parse resolver port"),
+            };
+        } else {
+            panic!("Invalid resolver address. Resolver address must be in the format IP:PORT");
+        }
+    }
+}
+
+struct Resolver {
+    ip: IpAddr,
+    port: u16,
+}
+
 
 fn main() {
     println!("Logs from your program will appear here!");
+    let args = Args::parse();
+    let resolver: Resolver = args.into();
+
+    println!("Resolver ip {}", resolver.ip);
+    println!("Resolver port {}", resolver.port);
 
     let udp_socket = UdpSocket::bind("127.0.0.1:2053").expect("Failed to bind to address");
     let mut buf = [0; 512];
