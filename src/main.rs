@@ -40,19 +40,19 @@ fn main() {
 
     loop {
         match udp_socket.recv_from(&mut buf) {
-            Ok((size, source)) => {
+            Ok((size, request_source)) => {
                 let dns_packet = DNSPacket::deserialize_query(&buf[..size]);
 
                 resolver_socket
                     .send_to(dns_packet.serialize().as_ref(), resolver)
                     .expect("Failed to send request to resolver");
 
-                match udp_socket.recv_from(&mut buf) {
-                    Ok((size, source)) => {
+                match udp_socket.recv(&mut buf) {
+                    Ok(size) => {
                         let mut response = DNSPacket::deserialize_response(&buf[..size]);
                         response.set_header_id(1234);
                         udp_socket
-                            .send_to(&response.serialize(), source)
+                            .send_to(&response.serialize(), request_source)
                             .expect("Failed to send response");
                     }
                     Err(e) => {
