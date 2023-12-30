@@ -42,18 +42,22 @@ fn main() {
         match udp_socket.recv_from(&mut buf) {
             Ok((size, request_source)) => {
                 let dns_packet = DNSPacket::deserialize_query(&buf[..size]);
+                println!("Received query: {:?}", request_source);
 
                 resolver_socket
                     .send_to(dns_packet.serialize().as_ref(), resolver)
                     .expect("Failed to send request to resolver");
+                println!("Sent request to resolver: {:?}", resolver);
 
                 match udp_socket.recv(&mut buf) {
                     Ok(size) => {
                         let mut response = DNSPacket::deserialize_response(&buf[..size]);
+                        println!("Received response from resolver: {:?}", resolver);
                         response.set_header_id(1234);
                         udp_socket
                             .send_to(&response.serialize(), request_source)
                             .expect("Failed to send response");
+                        println!("Sent response to client: {:?}", request_source);
                     }
                     Err(e) => {
                         eprintln!("Error receiving data: {}", e);
