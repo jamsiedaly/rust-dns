@@ -34,6 +34,13 @@ impl DNSPacket {
         });
     }
 
+    pub fn set_header_id(&mut self, header_id: u16) {
+        match self {
+            DNSPacket::Query(query) => query.header.id = header_id,
+            DNSPacket::Response(response) => response.header.id = header_id,
+        }
+    }
+
     pub fn serialize(&self) -> Vec<u8> {
         return match self {
             DNSPacket::Query(query) => {

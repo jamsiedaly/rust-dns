@@ -49,7 +49,8 @@ fn main() {
 
                 match udp_socket.recv_from(&mut buf) {
                     Ok((size, source)) => {
-                        let response = DNSPacket::deserialize_response(&buf[..size]);
+                        let mut response = DNSPacket::deserialize_response(&buf[..size]);
+                        response.set_header_id(1234);
                         udp_socket
                             .send_to(&response.serialize(), source)
                             .expect("Failed to send response");
