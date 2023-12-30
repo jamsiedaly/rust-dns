@@ -9,8 +9,8 @@ and doing recursive resolve. Along the way we'll learn about the DNS protocol,
 DNS packet format, root servers, authoritative servers, forwarding servers,
 various record types (A, AAAA, CNAME, etc) and more.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+**Note**: This application was built by following the excellent guide from
+[codecrafters.io](https://codecrafters.io).
 
 # Passing the first stage
 
