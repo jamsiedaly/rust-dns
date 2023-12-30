@@ -154,6 +154,7 @@ impl ResourceRecord {
 #[derive(Parser)]
 #[command(author, version, about)]
 struct Args {
+    #[arg(short, long)]
     resolver: String,
 }
 
