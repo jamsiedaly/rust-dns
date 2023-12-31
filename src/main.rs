@@ -49,7 +49,7 @@ fn main() {
                     .expect("Failed to send request to resolver");
                 println!("Sent request to resolver: {:?}", resolver);
 
-                match udp_socket.recv(&mut buf) {
+                match resolver_socket.recv(&mut buf) {
                     Ok(size) => {
                         let mut response = DNSPacket::deserialize_response(&buf[..size]);
                         println!("Received response from resolver: {:?}", resolver);
