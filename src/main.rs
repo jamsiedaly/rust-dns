@@ -64,45 +64,6 @@ fn main() {
                         break;
                     }
                 }
-
-                // let answers = dns_packet.questions
-                //     .iter()
-                //     .map(|question| ResourceRecord {
-                //         name: question.labels.clone(),
-                //         rtype: question.qtype,
-                //         class: question.qclass,
-                //         ttl: 60,
-                //         rdlength: 4,
-                //         rdata: vec![8, 8, 8, 8],
-                //     })
-                //     .collect::<Vec<ResourceRecord>>();
-                //
-                // let response_header = DNSHeader {
-                //     id: request_header.id,
-                //     qr: 1,
-                //     opcode: request_header.opcode,
-                //     aa: 0,
-                //     tc: 0,
-                //     rd: request_header.rd,
-                //     ra: 0,
-                //     z: 0,
-                //     rcode: 4,
-                //     qdcount: questions.len() as u16,
-                //     ancount: answers.len() as u16,
-                //     nscount: 0,
-                //     arcount: 0,
-                // };
-                //
-                // let mut response = vec![];
-                // response.extend_from_slice(&response_header.serialize());
-                // for question in questions.into_iter() {
-                //     response.extend_from_slice(&question.serialize());
-                // }
-                // for answer in answers.into_iter() {
-                //     response.extend_from_slice(&answer.serialize());
-                // }
-                //
-                // println!("Received {} bytes from {}", size, source);
             }
             Err(e) => {
                 eprintln!("Error receiving data: {}", e);
