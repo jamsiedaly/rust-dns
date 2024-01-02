@@ -29,7 +29,11 @@ impl DNSPacket {
     pub fn deserialize_response(buffer: &[u8]) -> DNSPacket {
         let header = DNSHeader::deserialize(&buffer[..12]);
         let (questions, new_pos) = Question::deserialize(&buffer[12..], header.qdcount);
-        let answers = ResourceRecord::deserialize(&buffer[12+new_pos..], header.ancount);
+        let answers = if header.ancount > 0 {
+            ResourceRecord::deserialize(&buffer[12+new_pos..], header.ancount)
+        } else {
+            Vec::new()
+        };
         return DNSPacket::Response(DnsResponse {
             header,
             questions,
