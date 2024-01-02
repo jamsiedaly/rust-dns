@@ -112,10 +112,10 @@ impl DNSHeader {
         let ra = buffer[3] >> 7;
         let z = (buffer[3] >> 4) & 0b111;
         let rcode = buffer[3] & 0b1111;
-        let qdcount = ((buffer[4] as u16) << 8) | buffer[5] as u16;
-        let ancount = ((buffer[6] as u16) << 8) | buffer[7] as u16;
-        let nscount = ((buffer[8] as u16) << 8) | buffer[9] as u16;
-        let arcount = ((buffer[10] as u16) << 8) | buffer[11] as u16;
+        let qdcount = BigEndian::read_u16(&buffer[4..6]);
+        let ancount = BigEndian::read_u16(&buffer[6..8]);
+        let nscount = BigEndian::read_u16(&buffer[8..10]);
+        let arcount = BigEndian::read_u16(&buffer[10..12]);
         return DNSHeader {
             id,
             qr,
