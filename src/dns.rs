@@ -257,8 +257,7 @@ impl ResourceRecord {
             pos += 4;
             let rdlength = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
             pos += 2;
-            let rdata = buffer[pos..pos + rdlength as usize].to_vec();
-            pos += rdlength as usize;
+            let rdata = buffer[pos..].to_vec();
             records.push(ResourceRecord {
                 name: labels,
                 rtype,
