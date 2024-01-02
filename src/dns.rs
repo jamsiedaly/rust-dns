@@ -19,14 +19,14 @@ pub struct DnsResponse {
 impl DNSPacket {
     pub fn deserialize_query(buffer: &[u8]) -> DNSPacket {
         let header = DNSHeader::deserialize(&buffer[..12]);
-        let questions = Question::deserialize(&buffer[12..], header.qdcount);
+        let (questions, _) = Question::deserialize(&buffer[12..], header.qdcount);
         return DNSPacket::Query(DnsQuery { header, questions });
     }
 
     pub fn deserialize_response(buffer: &[u8]) -> DNSPacket {
         let header = DNSHeader::deserialize(&buffer[..12]);
-        let questions = Question::deserialize(&buffer[12..], header.qdcount);
-        let answers = ResourceRecord::deserialize(&buffer[12..], header.ancount);
+        let (questions, new_pos) = Question::deserialize(&buffer[12..], header.qdcount);
+        let answers = ResourceRecord::deserialize(&buffer[12+new_pos..], header.ancount);
         return DNSPacket::Response(DnsResponse {
             header,
             questions,
@@ -45,30 +45,6 @@ impl DNSPacket {
         return match self {
             DNSPacket::Query(query) => query.questions[0].labels.join("."),
             DNSPacket::Response(response) => response.questions[0].labels.join("."),
-        };
-    }
-
-    pub fn get_answer(self) -> Result<String, DnsQuery> {
-        return match self {
-            DNSPacket::Response(response) => Ok(response
-                .answers
-                .iter()
-                .map(|answer| answer.to_string())
-                .collect::<Vec<String>>()
-                .join(".")),
-            DNSPacket::Query(query) => Err(query),
-        };
-    }
-
-    pub fn get_answer_ip(self) -> Result<String, DnsQuery> {
-        return match self {
-            DNSPacket::Response(response) => Ok(response
-                .answers
-                .iter()
-                .map(|answer| answer.rdata.iter().map(|byte| byte.to_string()).collect::<Vec<String>>().join(".") )
-                .collect::<Vec<String>>()
-                .join(".")),
-            DNSPacket::Query(query) => Err(query),
         };
     }
 
@@ -170,7 +146,7 @@ pub struct Question {
 }
 
 impl Question {
-    pub fn deserialize(buffer: &[u8], qcount: u16) -> Vec<Question> {
+    pub fn deserialize(buffer: &[u8], qcount: u16) -> (Vec<Question>, usize) {
         let mut pos = 0;
         let mut questions = Vec::new();
         for _ in 0..qcount {
@@ -194,7 +170,7 @@ impl Question {
                 qclass,
             });
         }
-        return questions;
+        return (questions, pos + 2);
     }
 
     pub fn serialize(&self) -> Vec<u8> {
