@@ -41,6 +41,25 @@ impl DNSPacket {
         }
     }
 
+    pub fn get_question(&self) -> String {
+        return match self {
+            DNSPacket::Query(query) => query.questions[0].labels.join("."),
+            DNSPacket::Response(response) => response.questions[0].labels.join("."),
+        };
+    }
+
+    pub fn get_answer(self) -> Result<String, DnsQuery> {
+        return match self {
+            DNSPacket::Response(response) => Ok(response
+                .answers
+                .iter()
+                .map(|answer| answer.to_string())
+                .collect::<Vec<String>>()
+                .join(".")),
+            DNSPacket::Query(query) => Err(query)
+        };
+    }
+
     pub fn serialize(&self) -> Vec<u8> {
         return match self {
             DNSPacket::Query(query) => {
@@ -250,5 +269,15 @@ impl ResourceRecord {
             });
         }
         return records;
+    }
+
+    fn to_string(&self) -> String {
+        let mut string = String::new();
+        for label in &self.name {
+            string.push_str(label);
+            string.push('.');
+        }
+        string.pop();
+        return string;
     }
 }
