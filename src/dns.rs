@@ -60,6 +60,18 @@ impl DNSPacket {
         };
     }
 
+    pub fn get_answer_ip(self) -> Result<String, DnsQuery> {
+        return match self {
+            DNSPacket::Response(response) => Ok(response
+                .answers
+                .iter()
+                .map(|answer| answer.rdata.iter().map(|byte| byte.to_string()).collect::<Vec<String>>().join(".") )
+                .collect::<Vec<String>>()
+                .join(".")),
+            DNSPacket::Query(query) => Err(query),
+        };
+    }
+
     pub fn serialize(&self) -> Vec<u8> {
         return match self {
             DNSPacket::Query(query) => {
