@@ -1,15 +1,18 @@
 use nom::AsBytes;
 
+#[derive(Debug)]
 pub enum DNSPacket {
     Query(DnsQuery),
     Response(DnsResponse),
 }
 
+#[derive(Debug)]
 pub struct DnsQuery {
     pub header: DNSHeader,
     pub questions: Vec<Question>,
 }
 
+#[derive(Debug)]
 pub struct DnsResponse {
     pub header: DNSHeader,
     pub questions: Vec<Question>,
@@ -32,20 +35,6 @@ impl DNSPacket {
             questions,
             answers,
         });
-    }
-
-    // pub fn set_header_id(&mut self, header_id: u16) {
-    //     match self {
-    //         DNSPacket::Query(query) => query.header.id = header_id,
-    //         DNSPacket::Response(response) => response.header.id = header_id,
-    //     }
-    // }
-
-    pub fn get_question(&self) -> String {
-        return match self {
-            DNSPacket::Query(query) => query.questions[0].labels.join("."),
-            DNSPacket::Response(response) => response.questions[0].labels.join("."),
-        };
     }
 
     pub fn serialize(&self) -> Vec<u8> {
@@ -73,6 +62,7 @@ impl DNSPacket {
     }
 }
 
+#[derive(Debug)]
 pub struct DNSHeader {
     pub id: u16,
     pub qr: u8,
@@ -139,6 +129,7 @@ impl DNSHeader {
     }
 }
 
+#[derive(Debug)]
 pub struct Question {
     pub labels: Vec<String>,
     pub qtype: u16,
@@ -188,6 +179,7 @@ impl Question {
     }
 }
 
+#[derive(Debug)]
 pub struct ResourceRecord {
     pub name: Vec<String>,
     pub rtype: u16,
@@ -256,15 +248,5 @@ impl ResourceRecord {
             });
         }
         return records;
-    }
-
-    fn to_string(&self) -> String {
-        let mut string = String::new();
-        for label in &self.name {
-            string.push_str(label);
-            string.push('.');
-        }
-        string.pop();
-        return string;
     }
 }

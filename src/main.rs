@@ -48,13 +48,13 @@ fn main() {
 
                 match resolver_socket.recv(&mut buf) {
                     Ok(size) => {
-                        let mut response = DNSPacket::deserialize_response(&buf[..size]);
-                        // response.set_header_id(1234);
+                        let response = DNSPacket::deserialize_response(&buf[..size]);
                         udp_socket
                             .send_to(&response.serialize(), request_source)
                             .expect("Failed to send response");
                         println!("Sent response to {}", request_source);
-                        println!("Requested {}", dns_packet.get_question());
+                        println!("Requested {:?}", dns_packet);
+                        println!("Response {:?}", response);
                     }
                     Err(e) => {
                         eprintln!("Error receiving data: {}", e);
