@@ -56,7 +56,10 @@ fn main() {
                             .expect("Failed to send response");
                         println!("Sent response to {}", request_source);
                         println!("Requested {}", dns_packet.get_question());
-                        println!("Response: {:?}", response.get_answer().unwrap_or("No answer".to_owned()));
+                        println!(
+                            "Response: {:?}",
+                            response.get_answer().unwrap_or("No answer".to_owned())
+                        );
                     }
                     Err(e) => {
                         eprintln!("Error receiving data: {}", e);

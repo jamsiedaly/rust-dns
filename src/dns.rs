@@ -56,7 +56,7 @@ impl DNSPacket {
                 .map(|answer| answer.to_string())
                 .collect::<Vec<String>>()
                 .join(".")),
-            DNSPacket::Query(query) => Err(query)
+            DNSPacket::Query(query) => Err(query),
         };
     }
 
