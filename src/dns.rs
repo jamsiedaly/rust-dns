@@ -157,9 +157,9 @@ impl Question {
                 pos += len + 1;
             }
             pos += 1;
-            let qtype = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
+            let qtype = BigEndian::read_u16(&buffer[pos..pos + 2]);
             pos += 2;
-            let qclass = ((buffer[pos] as u16) << 8) | buffer[pos + 1] as u16;
+            let qclass = BigEndian::read_u16(&buffer[pos..pos + 2]);
             questions.push(Question {
                 labels,
                 qtype,
