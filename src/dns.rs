@@ -34,12 +34,12 @@ impl DNSPacket {
         });
     }
 
-    pub fn set_header_id(&mut self, header_id: u16) {
-        match self {
-            DNSPacket::Query(query) => query.header.id = header_id,
-            DNSPacket::Response(response) => response.header.id = header_id,
-        }
-    }
+    // pub fn set_header_id(&mut self, header_id: u16) {
+    //     match self {
+    //         DNSPacket::Query(query) => query.header.id = header_id,
+    //         DNSPacket::Response(response) => response.header.id = header_id,
+    //     }
+    // }
 
     pub fn get_question(&self) -> String {
         return match self {

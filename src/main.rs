@@ -49,7 +49,7 @@ fn main() {
                 match resolver_socket.recv(&mut buf) {
                     Ok(size) => {
                         let mut response = DNSPacket::deserialize_response(&buf[..size]);
-                        response.set_header_id(1234);
+                        // response.set_header_id(1234);
                         udp_socket
                             .send_to(&response.serialize(), request_source)
                             .expect("Failed to send response");
