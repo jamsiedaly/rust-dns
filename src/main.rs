@@ -1,6 +1,5 @@
 use crate::dns::DNSPacket;
 use clap::Parser;
-use nom::AsBytes;
 use std::net::{IpAddr, SocketAddr, UdpSocket};
 use std::str::FromStr;
 
