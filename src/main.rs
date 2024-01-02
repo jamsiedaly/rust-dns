@@ -48,12 +48,11 @@ fn main() {
 
                 match resolver_socket.recv(&mut buf) {
                     Ok(size) => {
+                        println!("Requested {:?}", dns_packet);
                         let response = DNSPacket::deserialize_response(&buf[..size]);
                         udp_socket
                             .send_to(&response.serialize(), request_source)
                             .expect("Failed to send response");
-                        println!("Sent response to {}", request_source);
-                        println!("Requested {:?}", dns_packet);
                         println!("Response {:?}", response);
                     }
                     Err(e) => {
