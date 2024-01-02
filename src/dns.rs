@@ -1,3 +1,4 @@
+use byteorder::{BigEndian, ByteOrder};
 use nom::AsBytes;
 
 #[derive(Debug)]
@@ -28,15 +29,12 @@ impl DNSPacket {
 
     pub fn deserialize_response(buffer: &[u8]) -> DNSPacket {
         let header = DNSHeader::deserialize(&buffer[..12]);
-        println!("Header: {:?}", header);
         let (questions, new_pos) = Question::deserialize(&buffer[12..], header.qdcount);
-        println!("Questions: {:?}", questions);
         let answers = if header.ancount > 0 {
             ResourceRecord::deserialize(&buffer[12+new_pos..], header.ancount)
         } else {
             Vec::new()
         };
-        println!("Answers: {:?}", answers);
         return DNSPacket::Response(DnsResponse {
             header,
             questions,
@@ -105,7 +103,7 @@ impl DNSHeader {
     }
 
     pub fn deserialize(buffer: &[u8]) -> DNSHeader {
-        let id = ((buffer[0] as u16) << 8) | buffer[1] as u16;
+        let id = BigEndian::read_u16(&buffer[0..2]);
         let qr = buffer[2] >> 7;
         let opcode = (buffer[2] >> 3) & 0b1111;
         let aa = (buffer[2] >> 2) & 0b1;

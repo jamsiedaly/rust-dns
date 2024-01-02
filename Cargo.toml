@@ -25,3 +25,4 @@ thiserror = "1.0.38"       # error handling
 nom = "7.1.3"              # parsing
 rand = "0.8.5"             # randomness
 clap = { version = "4.4.12", features = ["derive"] }
+byteorder = "1.5.0"
