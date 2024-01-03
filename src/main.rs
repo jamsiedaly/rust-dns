@@ -58,7 +58,6 @@ async fn main() {
                 }
 
                 let responses = join_all(tasks).await;
-
                 let mut header = responses[0].as_ref().unwrap().header.clone();
                 let answers = responses.into_iter().flat_map(|response| response.unwrap().answers).collect::<Vec<_>>();
                 header.qdcount = dns_query.questions.len() as u16;
