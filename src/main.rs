@@ -73,7 +73,7 @@ async fn main() {
                     answers,
                 };
 
-                println!("Combined response {:?}", response.unwrap());
+                println!("Combined response {:?}", response);
 
                 udp_socket.send_to(&response.serialize(), request_source).await.expect("Failed to send response to client");
             }
