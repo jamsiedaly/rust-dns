@@ -64,9 +64,9 @@ async fn main() {
                 }
 
                 let mut header = responses[0].as_ref().unwrap().header.clone();
-                header.qdcount = dns_query.questions.len() as u16;
-                header.ancount = responses.iter().map(|response| response.as_ref().unwrap().header.ancount).sum();
                 let answers = responses.into_iter().flat_map(|response| response.unwrap().answers).collect::<Vec<_>>();
+                header.qdcount = dns_query.questions.len() as u16;
+                header.ancount = answers.len() as u16;
                 let response = DnsResponse {
                     header,
                     questions: dns_query.questions,
