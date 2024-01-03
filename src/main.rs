@@ -60,7 +60,7 @@ async fn main() {
 
                 let responses = join_all(tasks).await;
                 for r in &responses {
-                    println!("{:?}", r.as_ref().unwrap());
+                    println!("Individual response {:?}", r.as_ref().unwrap());
                 }
 
                 let mut header = responses[0].as_ref().unwrap().header.clone();
@@ -72,6 +72,8 @@ async fn main() {
                     questions: dns_query.questions,
                     answers,
                 };
+
+                println!("Combined response {:?}", response.unwrap());
 
                 udp_socket.send_to(&response.serialize(), request_source).await.expect("Failed to send response to client");
             }
