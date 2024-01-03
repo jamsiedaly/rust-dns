@@ -60,7 +60,7 @@ async fn main() {
 
                 let responses = join_all(tasks).await;
                 for r in &responses {
-                    println!("{:?}", r.unwrap());
+                    println!("{:?}", r.as_ref().unwrap());
                 }
 
                 let mut header = responses[0].as_ref().unwrap().header.clone();
