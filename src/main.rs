@@ -59,9 +59,10 @@ async fn main() {
                 }
 
                 let responses = join_all(tasks).await;
+                let header = responses[0].as_ref().unwrap().header.clone();
                 let answers = responses.into_iter().flat_map(|response| response.unwrap().answers).collect::<Vec<_>>();
                 let response = DnsResponse {
-                    header: dns_query.header,
+                    header,
                     questions: dns_query.questions,
                     answers,
                 };
