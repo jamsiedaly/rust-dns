@@ -31,7 +31,6 @@ impl From<Args> for SocketAddr {
 
 #[tokio::main]
 async fn main() {
-    println!("Logs from your program will appear here!");
     let args = Args::parse();
     let resolver: SocketAddr = args.into();
 
@@ -59,9 +58,6 @@ async fn main() {
                 }
 
                 let responses = join_all(tasks).await;
-                for r in &responses {
-                    println!("Individual response {:?}", r.as_ref().unwrap());
-                }
 
                 let mut header = responses[0].as_ref().unwrap().header.clone();
                 let answers = responses.into_iter().flat_map(|response| response.unwrap().answers).collect::<Vec<_>>();
@@ -72,8 +68,6 @@ async fn main() {
                     questions: dns_query.questions,
                     answers,
                 };
-
-                println!("Combined response {:?}", response);
 
                 udp_socket.send_to(&response.serialize(), request_source).await.expect("Failed to send response to client");
             }
