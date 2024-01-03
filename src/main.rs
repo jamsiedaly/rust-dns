@@ -59,6 +59,10 @@ async fn main() {
                 }
 
                 let responses = join_all(tasks).await;
+                for r in &responses {
+                    println!("{:?}", r.unwrap());
+                }
+
                 let mut header = responses[0].as_ref().unwrap().header.clone();
                 header.qdcount = dns_query.questions.len() as u16;
                 header.ancount = responses.iter().map(|response| response.as_ref().unwrap().header.ancount).sum();
