@@ -1,6 +1,7 @@
 use crate::dns::DNSPacket;
 use clap::Parser;
-use std::net::{IpAddr, SocketAddr, UdpSocket};
+use std::net::{IpAddr, SocketAddr};
+use tokio::net::UdpSocket;
 use std::str::FromStr;
 
 mod dns;
@@ -26,32 +27,34 @@ impl From<Args> for SocketAddr {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("Logs from your program will appear here!");
     let args = Args::parse();
     let resolver: SocketAddr = args.into();
 
-    let udp_socket =
-        UdpSocket::bind("127.0.0.1:2053").expect("Failed to bind to localhost address");
-    let resolver_socket = UdpSocket::bind("0.0.0.0:0").expect("Failed to bind to resolver address");
+    let udp_socket = UdpSocket::bind("127.0.0.1:2053").await.expect("Failed to bind to localhost address");
+    let resolver_socket = UdpSocket::bind("0.0.0.0:0").await.expect("Failed to bind to resolver address");
 
     let mut buf = [0; 512];
 
     loop {
-        match udp_socket.recv_from(&mut buf) {
+        match udp_socket.recv_from(&mut buf).await {
             Ok((size, request_source)) => {
                 let dns_packet = DNSPacket::deserialize_query(&buf[..size]);
 
                 resolver_socket
                     .send_to(dns_packet.serialize().as_ref(), resolver)
+                    .await
                     .expect("Failed to send request to resolver");
 
-                match resolver_socket.recv(&mut buf) {
+                match resolver_socket.recv(&mut buf).await {
                     Ok(size) => {
                         println!("Requested {:?}", dns_packet);
                         let response = DNSPacket::deserialize_response(&buf[..size]);
                         udp_socket
                             .send_to(&response.serialize(), request_source)
+                            .await
                             .expect("Failed to send response");
                         println!("Response {:?}", response);
                     }
