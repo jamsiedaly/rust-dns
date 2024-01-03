@@ -1,13 +1,7 @@
 use byteorder::{BigEndian, ByteOrder};
 use nom::AsBytes;
 
-#[derive(Debug)]
-pub enum DNSPacket {
-    Query(DnsQuery),
-    Response(DnsResponse),
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DnsQuery {
     pub header: DNSHeader,
     pub questions: Vec<Question>,
@@ -20,14 +14,36 @@ pub struct DnsResponse {
     pub answers: Vec<ResourceRecord>,
 }
 
-impl DNSPacket {
-    pub fn deserialize_query(buffer: &[u8]) -> DNSPacket {
+impl DnsQuery {
+    pub fn deserialize(buffer: &[u8]) -> DnsQuery {
         let header = DNSHeader::deserialize(&buffer[..12]);
         let (questions, _) = Question::deserialize(&buffer[12..], header.qdcount);
-        return DNSPacket::Query(DnsQuery { header, questions });
+        return DnsQuery { header, questions };
     }
 
-    pub fn deserialize_response(buffer: &[u8]) -> DNSPacket {
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.header.serialize());
+        for question in &self.questions {
+            buffer.extend_from_slice(&question.serialize());
+        }
+        return buffer
+    }
+
+    pub fn split_questions(&mut self) -> Vec<DnsQuery> {
+        let mut queries = Vec::new();
+        for question in &self.questions {
+            let mut query = self.clone();
+            query.header.qdcount = 1;
+            query.questions = vec![question.clone()];
+            queries.push(query);
+        }
+        return queries;
+    }
+}
+
+impl DnsResponse {
+    pub fn deserialize(buffer: &[u8]) -> DnsResponse {
         let header = DNSHeader::deserialize(&buffer[..12]);
         let (questions, new_pos) = Question::deserialize(&buffer[12..], header.qdcount);
         let answers = if header.ancount > 0 {
@@ -35,39 +51,27 @@ impl DNSPacket {
         } else {
             Vec::new()
         };
-        return DNSPacket::Response(DnsResponse {
+        return DnsResponse {
             header,
             questions,
             answers,
-        });
+        };
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        return match self {
-            DNSPacket::Query(query) => {
-                let mut buffer = Vec::new();
-                buffer.extend_from_slice(&query.header.serialize());
-                for question in &query.questions {
-                    buffer.extend_from_slice(&question.serialize());
-                }
-                buffer
-            }
-            DNSPacket::Response(response) => {
-                let mut buffer = Vec::new();
-                buffer.extend_from_slice(&response.header.serialize());
-                for question in &response.questions {
-                    buffer.extend_from_slice(&question.serialize());
-                }
-                for answer in &response.answers {
-                    buffer.extend_from_slice(&answer.serialize());
-                }
-                buffer
-            }
-        };
+        let mut buffer = Vec::new();
+        buffer.extend_from_slice(&self.header.serialize());
+        for question in &self.questions {
+            buffer.extend_from_slice(&question.serialize());
+        }
+        for answer in &self.answers {
+            buffer.extend_from_slice(&answer.serialize());
+        }
+        return buffer
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DNSHeader {
     pub id: u16,
     pub qr: u8,
@@ -134,7 +138,7 @@ impl DNSHeader {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Question {
     pub labels: Vec<String>,
     pub qtype: u16,

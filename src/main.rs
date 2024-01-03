@@ -1,8 +1,10 @@
-use crate::dns::DNSPacket;
+use crate::dns::{DnsResponse, DnsQuery};
 use clap::Parser;
 use std::net::{IpAddr, SocketAddr};
 use tokio::net::UdpSocket;
 use std::str::FromStr;
+use std::sync::Arc;
+use futures::future::join_all;
 
 mod dns;
 
@@ -34,35 +36,37 @@ async fn main() {
     let resolver: SocketAddr = args.into();
 
     let udp_socket = UdpSocket::bind("127.0.0.1:2053").await.expect("Failed to bind to localhost address");
-    let resolver_socket = UdpSocket::bind("0.0.0.0:0").await.expect("Failed to bind to resolver address");
+    let resolver_socket = Arc::new(UdpSocket::bind("0.0.0.0:0").await.expect("Failed to bind to resolver address"));
 
     let mut buf = [0; 512];
 
     loop {
         match udp_socket.recv_from(&mut buf).await {
             Ok((size, request_source)) => {
-                let dns_packet = DNSPacket::deserialize_query(&buf[..size]);
+                let mut dns_query = DnsQuery::deserialize(&buf[..size]);
 
-                resolver_socket
-                    .send_to(dns_packet.serialize().as_ref(), resolver)
-                    .await
-                    .expect("Failed to send request to resolver");
+                let singular_queries = dns_query.split_questions();
 
-                match resolver_socket.recv(&mut buf).await {
-                    Ok(size) => {
-                        println!("Requested {:?}", dns_packet);
-                        let response = DNSPacket::deserialize_response(&buf[..size]);
-                        udp_socket
-                            .send_to(&response.serialize(), request_source)
-                            .await
-                            .expect("Failed to send response");
-                        println!("Response {:?}", response);
-                    }
-                    Err(e) => {
-                        eprintln!("Error receiving data: {}", e);
-                        break;
-                    }
+                let mut tasks = vec![];
+
+                for query in singular_queries {
+                    let resolver_socket = resolver_socket.clone();
+                    tasks.push(tokio::spawn(async move {
+                        resolver_socket.send_to(&query.serialize(), resolver).await.expect("Failed to send request to resolver");
+                        resolver_socket.recv(&mut buf).await.unwrap();
+                        DnsResponse::deserialize(&buf)
+                    }));
                 }
+
+                let responses = join_all(tasks).await;
+                let answers = responses.into_iter().flat_map(|response| response.unwrap().answers).collect::<Vec<_>>();
+                let response = DnsResponse {
+                    header: dns_query.header,
+                    questions: dns_query.questions,
+                    answers,
+                };
+
+                udp_socket.send_to(&response.serialize(), request_source).await.expect("Failed to send response to client");
             }
             Err(e) => {
                 eprintln!("Error receiving data: {}", e);
