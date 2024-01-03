@@ -73,6 +73,8 @@ async fn main() {
                     answers,
                 };
 
+                println!("Response: {:?}", response);
+
                 udp_socket.send_to(&response.serialize(), request_source).await.expect("Failed to send response to client");
             }
             Err(e) => {
