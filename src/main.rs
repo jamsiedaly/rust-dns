@@ -59,7 +59,12 @@ async fn main() {
 
                 let responses = join_all(tasks).await;
                 let mut header = responses[0].as_ref().unwrap().header.clone();
-                let answers = responses.into_iter().flat_map(|response| response.unwrap().answers).collect::<Vec<_>>();
+                let mut answers = vec![];
+                for response in responses {
+                    for answer in response.unwrap().answers {
+                        answers.push(answer);
+                    }
+                }
                 header.qdcount = dns_query.questions.len() as u16;
                 header.ancount = answers.len() as u16;
                 let response = DnsResponse {
