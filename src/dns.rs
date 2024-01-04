@@ -147,19 +147,27 @@ pub struct Question {
 
 impl Question {
     pub fn deserialize(buffer: &[u8], qcount: u16) -> (Vec<Question>, usize) {
+        let mut jumped = false;
         let mut pos = 0;
         let mut questions = Vec::new();
         for _ in 0..qcount {
             let mut labels = Vec::new();
             'label: loop {
                 let len = buffer[pos] as usize;
+                if len & 0xC0 == 0xC0 {
+                    if !jumped {
+                        pos = ((BigEndian::read_u16(&buffer[pos..pos+2]) - 0b1100000000000000) - 12) as usize;
+                        jumped = true;
+                        continue 'label;
+                    }
+                    else { break 'label; }
+                }
                 pos += 1;
                 if len == 0 {
                     break 'label;
                 }
-
                 let label = String::from_utf8_lossy(&buffer[pos..pos + len]);
-                println!("label: {}", label);
+                println!("Label: {}", label);
                 labels.push(label.into_owned());
                 pos += len;
             }
