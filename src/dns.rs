@@ -167,7 +167,6 @@ impl Question {
                     break 'label;
                 }
                 let label = String::from_utf8_lossy(&buffer[pos..pos + len]);
-                println!("Label: {}", label);
                 labels.push(label.into_owned());
                 pos += len;
             }
