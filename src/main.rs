@@ -1,10 +1,10 @@
-use crate::dns::{DnsResponse, DnsQuery};
+use crate::dns::{DnsQuery, DnsResponse};
 use clap::Parser;
+use futures::future::join_all;
 use std::net::{IpAddr, SocketAddr};
-use tokio::net::UdpSocket;
 use std::str::FromStr;
 use std::sync::Arc;
-use futures::future::join_all;
+use tokio::net::UdpSocket;
 
 mod dns;
 
@@ -34,8 +34,14 @@ async fn main() {
     let args = Args::parse();
     let resolver: SocketAddr = args.into();
 
-    let udp_socket = UdpSocket::bind("127.0.0.1:2053").await.expect("Failed to bind to localhost address");
-    let resolver_socket = Arc::new(UdpSocket::bind("0.0.0.0:0").await.expect("Failed to bind to resolver address"));
+    let udp_socket = UdpSocket::bind("127.0.0.1:2053")
+        .await
+        .expect("Failed to bind to localhost address");
+    let resolver_socket = Arc::new(
+        UdpSocket::bind("0.0.0.0:0")
+            .await
+            .expect("Failed to bind to resolver address"),
+    );
 
     let mut buf = [0; 512];
 
@@ -52,7 +58,10 @@ async fn main() {
                 for query in singular_queries {
                     let resolver_socket = resolver_socket.clone();
                     tasks.push(tokio::spawn(async move {
-                        resolver_socket.send_to(&query.serialize(), resolver).await.expect("Failed to send request to resolver");
+                        resolver_socket
+                            .send_to(&query.serialize(), resolver)
+                            .await
+                            .expect("Failed to send request to resolver");
                         resolver_socket.recv(&mut buf).await.unwrap();
                         DnsResponse::deserialize(&buf)
                     }));
@@ -73,7 +82,10 @@ async fn main() {
                     questions: dns_query.questions,
                     answers,
                 };
-                udp_socket.send_to(&response.serialize(), request_source).await.expect("Failed to send response to client");
+                udp_socket
+                    .send_to(&response.serialize(), request_source)
+                    .await
+                    .expect("Failed to send response to client");
                 println!("Responded: {:?}", response);
             }
             Err(e) => {

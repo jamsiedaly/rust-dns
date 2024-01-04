@@ -27,7 +27,7 @@ impl DnsQuery {
         for question in &self.questions {
             buffer.extend_from_slice(&question.serialize());
         }
-        return buffer
+        return buffer;
     }
 
     pub fn split_questions(&mut self) -> Vec<DnsQuery> {
@@ -47,7 +47,7 @@ impl DnsResponse {
         let header = DNSHeader::deserialize(&buffer[..12]);
         let (questions, new_pos) = Question::deserialize(&buffer[12..], header.qdcount);
         let answers = if header.ancount > 0 {
-            ResourceRecord::deserialize(&buffer[12+new_pos..], header.ancount)
+            ResourceRecord::deserialize(&buffer[12 + new_pos..], header.ancount)
         } else {
             Vec::new()
         };
@@ -67,7 +67,7 @@ impl DnsResponse {
         for answer in &self.answers {
             buffer.extend_from_slice(&answer.serialize());
         }
-        return buffer
+        return buffer;
     }
 }
 
@@ -156,11 +156,13 @@ impl Question {
                 let len = buffer[pos] as usize;
                 if len & 0xC0 == 0xC0 {
                     if !jumped {
-                        pos = ((BigEndian::read_u16(&buffer[pos..pos+2]) - 0b1100000000000000) - 12) as usize;
+                        pos = ((BigEndian::read_u16(&buffer[pos..pos + 2]) - 0b1100000000000000)
+                            - 12) as usize;
                         jumped = true;
                         continue 'label;
+                    } else {
+                        break 'label;
                     }
-                    else { break 'label; }
                 }
                 pos += 1;
                 if len == 0 {
