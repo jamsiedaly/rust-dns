@@ -169,8 +169,9 @@ impl Question {
                 qtype,
                 qclass,
             });
+            pos+=2;
         }
-        return (questions, pos + 2);
+        return (questions, pos);
     }
 
     pub fn serialize(&self) -> Vec<u8> {
