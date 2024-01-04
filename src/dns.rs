@@ -156,6 +156,9 @@ impl Question {
                 if len == 0 {
                     break 'label;
                 }
+                println!("len: {}", len);
+                println!("pos: {}", pos + 1);
+                println!("buffer length: {:?}", buffer.len());
                 let label = String::from_utf8_lossy(&buffer[pos + 1..pos + len + 1]);
                 labels.push(label.into_owned());
                 pos += len + 1;
@@ -169,7 +172,7 @@ impl Question {
                 qtype,
                 qclass,
             });
-            pos+=2;
+            pos += 2;
         }
         return (questions, pos);
     }
