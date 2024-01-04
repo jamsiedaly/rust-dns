@@ -153,23 +153,16 @@ impl Question {
             let mut labels = Vec::new();
             'label: loop {
                 let len = buffer[pos] as usize;
+                pos += 1;
                 if len == 0 {
                     break 'label;
                 }
-                if (pos + len) > buffer.len() {
-                    println!("len 1: {}", buffer[pos]);
-                    println!("len 2: {}", buffer[pos-1]);
-                    println!("len 3: {}", buffer[pos+1]);
-                    let l = String::from_utf8_lossy(&buffer[pos..]);
-                    println!("Remaining buffer: {}", l);
-                }
 
-                let label = String::from_utf8_lossy(&buffer[pos + 1..pos + len + 1]);
+                let label = String::from_utf8_lossy(&buffer[pos..pos + len]);
                 println!("label: {}", label);
                 labels.push(label.into_owned());
-                pos += len + 1;
+                pos += len;
             }
-            pos += 1;
             let qtype = BigEndian::read_u16(&buffer[pos..pos + 2]);
             pos += 2;
             let qclass = BigEndian::read_u16(&buffer[pos..pos + 2]);
