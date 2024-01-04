@@ -156,10 +156,16 @@ impl Question {
                 if len == 0 {
                     break 'label;
                 }
-                println!("len: {}", len);
-                println!("pos: {}", pos + 1);
-                println!("buffer length: {:?}", buffer.len());
+                if (pos + len) > buffer.len() {
+                    println!("len 1: {}", buffer[pos]);
+                    println!("len 2: {}", buffer[pos-1]);
+                    println!("len 3: {}", buffer[pos+1]);
+                    let l = String::from_utf8_lossy(&buffer[pos..]);
+                    println!("Remaining buffer: {}", l);
+                }
+
                 let label = String::from_utf8_lossy(&buffer[pos + 1..pos + len + 1]);
+                println!("label: {}", label);
                 labels.push(label.into_owned());
                 pos += len + 1;
             }
@@ -167,12 +173,12 @@ impl Question {
             let qtype = BigEndian::read_u16(&buffer[pos..pos + 2]);
             pos += 2;
             let qclass = BigEndian::read_u16(&buffer[pos..pos + 2]);
+            pos += 2;
             questions.push(Question {
                 labels,
                 qtype,
                 qclass,
             });
-            pos += 2;
         }
         return (questions, pos);
     }

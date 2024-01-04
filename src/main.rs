@@ -42,7 +42,7 @@ async fn main() {
     loop {
         match udp_socket.recv_from(&mut buf).await {
             Ok((size, request_source)) => {
-                let mut dns_query = DnsQuery::deserialize(&buf[..size]);
+                let mut dns_query = DnsQuery::deserialize(&buf[..size+1]);
                 println!("Request: {:?}", dns_query);
 
                 let singular_queries = dns_query.split_questions();
