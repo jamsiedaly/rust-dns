@@ -335,4 +335,93 @@ mod tests {
         assert_eq!(questions[0].qtype, 1);
         assert_eq!(questions[0].qclass, 1);
     }
+
+    #[test]
+    fn test_resource_record_serialize() {
+        let record = ResourceRecord {
+            name: vec!["www".to_string(), "example".to_string(), "com".to_string()],
+            rtype: 1,
+            class: 1,
+            ttl: 0,
+            rdlength: 4,
+            rdata: vec![127, 0, 0, 1],
+        };
+        let serialized = record.serialize();
+        assert_eq!(serialized, [3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 127, 0, 0, 1]);
+    }
+
+    #[test]
+    fn test_resource_record_deserialize() {
+        let buffer = [3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 127, 0, 0, 1];
+        let records = ResourceRecord::deserialize(&buffer, 1);
+        assert_eq!(records[0].name, vec!["www".to_string(), "example".to_string(), "com".to_string()]);
+        assert_eq!(records[0].rtype, 1);
+        assert_eq!(records[0].class, 1);
+        assert_eq!(records[0].ttl, 0);
+        assert_eq!(records[0].rdlength, 4);
+        assert_eq!(records[0].rdata, vec![127, 0, 0, 1]);
+    }
+
+    #[test]
+    fn test_dns_query_serialize() {
+        let query = DnsQuery {
+            header: DNSHeader {
+                id: 0x1234,
+                qr: 0,
+                opcode: 0,
+                aa: 0,
+                tc: 0,
+                rd: 1,
+                ra: 0,
+                z: 0,
+                rcode: 0,
+                qdcount: 1,
+                ancount: 0,
+                nscount: 0,
+                arcount: 0,
+            },
+            questions: vec![Question {
+                labels: vec!["www".to_string(), "example".to_string(), "com".to_string()],
+                qtype: 1,
+                qclass: 1,
+            }],
+        };
+        let serialized = query.serialize();
+        assert_eq!(serialized, [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1]);
+    }
+
+    #[test]
+    fn test_dns_query_serialize_multiple() {
+        let query = DnsQuery {
+            header: DNSHeader {
+                id: 0x1234,
+                qr: 0,
+                opcode: 0,
+                aa: 0,
+                tc: 0,
+                rd: 1,
+                ra: 0,
+                z: 0,
+                rcode: 0,
+                qdcount: 2,
+                ancount: 0,
+                nscount: 0,
+                arcount: 0,
+            },
+            questions: vec![
+                Question {
+                    labels: vec!["www".to_string(), "example".to_string(), "com".to_string()],
+                    qtype: 1,
+                    qclass: 1,
+                },
+                Question {
+                    labels: vec!["www".to_string(), "example".to_string(), "org".to_string()],
+                    qtype: 1,
+                    qclass: 1,
+                },
+            ],
+        };
+        let serialized = query.serialize();
+        assert_eq!(serialized, [0x12, 0x34, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 111, 114, 103, 0, 0, 1, 0, 1]);
+    }
 }
