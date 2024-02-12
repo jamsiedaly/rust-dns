@@ -424,4 +424,25 @@ mod tests {
         let serialized = query.serialize();
         assert_eq!(serialized, [0x12, 0x34, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 111, 114, 103, 0, 0, 1, 0, 1]);
     }
+
+    fn test_dns_query_deserialize() {
+        let buffer = [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1];
+        let query = DnsQuery::deserialize(&buffer);
+        assert_eq!(query.header.id, 0x1234);
+        assert_eq!(query.header.qr, 0);
+        assert_eq!(query.header.opcode, 0);
+        assert_eq!(query.header.aa, 0);
+        assert_eq!(query.header.tc, 0);
+        assert_eq!(query.header.rd, 1);
+        assert_eq!(query.header.ra, 0);
+        assert_eq!(query.header.z, 0);
+        assert_eq!(query.header.rcode, 0);
+        assert_eq!(query.header.qdcount, 1);
+        assert_eq!(query.header.ancount, 0);
+        assert_eq!(query.header.nscount, 0);
+        assert_eq!(query.header.arcount, 0);
+        assert_eq!(query.questions[0].labels, vec!["www".to_string(), "example".to_string(), "com".to_string()]);
+        assert_eq!(query.questions[0].qtype, 1);
+        assert_eq!(query.questions[0].qclass, 1);
+    }
 }
