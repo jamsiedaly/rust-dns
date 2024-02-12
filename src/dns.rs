@@ -387,7 +387,7 @@ mod tests {
             }],
         };
         let serialized = query.serialize();
-        assert_eq!(serialized, [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1]);
+        assert_eq!(serialized, SERIALIZED_DNS_QUERY_SINGLE_QUESTION);
     }
 
     #[test]
@@ -422,13 +422,12 @@ mod tests {
             ],
         };
         let serialized = query.serialize();
-        assert_eq!(serialized, [0x12, 0x34, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 111, 114, 103, 0, 0, 1, 0, 1]);
+        assert_eq!(serialized, SERIALIZED_DNS_QUERY_MULTIPLE_QUESTIONS);
     }
 
     #[test]
     fn test_dns_query_deserialize() {
-        let buffer = [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1];
-        let query = DnsQuery::deserialize(&buffer);
+        let query = DnsQuery::deserialize(&SERIALIZED_DNS_QUERY_SINGLE_QUESTION);
         assert_eq!(query.header.id, 0x1234);
         assert_eq!(query.header.qr, 0);
         assert_eq!(query.header.opcode, 0);
@@ -449,8 +448,7 @@ mod tests {
 
     #[test]
     fn test_dns_query_deserialize_multiple() {
-        let buffer = [0x12, 0x34, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 111, 114, 103, 0, 0, 1, 0, 1];
-        let query = DnsQuery::deserialize(&buffer);
+        let query = DnsQuery::deserialize(&SERIALIZED_DNS_QUERY_MULTIPLE_QUESTIONS);
         assert_eq!(query.header.id, 0x1234);
         assert_eq!(query.header.qr, 0);
         assert_eq!(query.header.opcode, 0);
@@ -505,13 +503,12 @@ mod tests {
             }],
         };
         let serialized = response.serialize();
-        assert_eq!(serialized, [0x12, 0x34, 0x81, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 127, 0, 0, 1]);
+        assert_eq!(serialized, SERIALIZED_DNS_RESPONSE);
     }
 
     #[test]
     fn test_dns_response_deserialize() {
-        let buffer = [0x12, 0x34, 0x81, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 127, 0, 0, 1];
-        let response = DnsResponse::deserialize(&buffer);
+        let response = DnsResponse::deserialize(&SERIALIZED_DNS_RESPONSE);
         assert_eq!(response.header.id, 0x1234);
         assert_eq!(response.header.qr, 1);
         assert_eq!(response.header.opcode, 0);
@@ -535,4 +532,8 @@ mod tests {
         assert_eq!(response.answers[0].rdlength, 4);
         assert_eq!(response.answers[0].rdata, vec![127, 0, 0, 1]);
     }
+    
+    const SERIALIZED_DNS_RESPONSE: [u8; 64] = [0x12, 0x34, 0x81, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4, 127, 0, 0, 1];
+    const SERIALIZED_DNS_QUERY_SINGLE_QUESTION: [u8; 33] = [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1];
+    const SERIALIZED_DNS_QUERY_MULTIPLE_QUESTIONS: [u8; 54] = [0x12, 0x34, 0x01, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1, 3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 111, 114, 103, 0, 0, 1, 0, 1];
 }
