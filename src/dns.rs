@@ -271,3 +271,68 @@ impl ResourceRecord {
         return records;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dns_header_serialize() {
+        let header = DNSHeader {
+            id: 0x1234,
+            qr: 0,
+            opcode: 0,
+            aa: 0,
+            tc: 0,
+            rd: 1,
+            ra: 0,
+            z: 0,
+            rcode: 0,
+            qdcount: 1,
+            ancount: 0,
+            nscount: 0,
+            arcount: 0,
+        };
+        let serialized = header.serialize();
+        assert_eq!(serialized, [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    }
+
+    #[test]
+    fn test_dns_header_deserialize() {
+        let buffer = [0x12, 0x34, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
+        let header = DNSHeader::deserialize(&buffer);
+        assert_eq!(header.id, 0x1234);
+        assert_eq!(header.qr, 0);
+        assert_eq!(header.opcode, 0);
+        assert_eq!(header.aa, 0);
+        assert_eq!(header.tc, 0);
+        assert_eq!(header.rd, 1);
+        assert_eq!(header.ra, 0);
+        assert_eq!(header.z, 0);
+        assert_eq!(header.rcode, 0);
+        assert_eq!(header.qdcount, 1);
+        assert_eq!(header.ancount, 0);
+        assert_eq!(header.nscount, 0);
+        assert_eq!(header.arcount, 0);
+    }
+
+    #[test]
+    fn test_question_serialize() {
+        let question = Question {
+            labels: vec!["www".to_string(), "example".to_string(), "com".to_string()],
+            qtype: 1,
+            qclass: 1,
+        };
+        let serialized = question.serialize();
+        assert_eq!(serialized, [3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1]);
+    }
+
+    #[test]
+    fn test_question_deserialize() {
+        let buffer = [3, 119, 119, 119, 7, 101, 120, 97, 109, 112, 108, 101, 3, 99, 111, 109, 0, 0, 1, 0, 1];
+        let (questions, _) = Question::deserialize(&buffer, 1);
+        assert_eq!(questions[0].labels, vec!["www".to_string(), "example".to_string(), "com".to_string()]);
+        assert_eq!(questions[0].qtype, 1);
+        assert_eq!(questions[0].qclass, 1);
+    }
+}
