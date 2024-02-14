@@ -1,7 +1,9 @@
+use std::fmt::Display;
+use std::io::{Read, Write};
 use crate::dns::{DnsQuery, DnsResponse};
 use clap::Parser;
 use futures::future::join_all;
-use std::net::{IpAddr, SocketAddr};
+use std::net::{IpAddr, SocketAddr, TcpListener};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::net::UdpSocket;
@@ -47,6 +49,37 @@ async fn main() {
             .await
             .expect("Failed to bind to resolver address"),
     );
+
+    tokio::spawn(async move {
+        let listener = TcpListener::bind("0.0.0.0:80").unwrap();
+
+        for stream in listener.incoming() {
+            match stream {
+                Ok(mut stream) => {
+                    std::thread::spawn(move || {
+                        let mut buf: [u8; 256] = [0; 256];
+                        if let Ok(message_length) = stream.read(&mut buf) {
+                            let message = parse_request(&buf, message_length);
+
+                            if message.path == "/" {
+                                let response = Response {
+                                    status_code: 200,
+                                    headers: vec![
+                                        "Content-Type: text/plain".to_owned(),
+                                        "Content-Length: 12".to_owned(),
+                                    ],
+                                    body: "Hello world!".to_owned(),
+                                };
+
+                                stream.write(response.to_string().as_bytes()).unwrap();
+                            }
+                        }
+                    });
+                }
+                _ => {}
+            }
+        }
+    });
 
     let mut buf = [0; 512];
 
@@ -98,5 +131,76 @@ async fn main() {
                 break;
             }
         }
+    }
+}
+
+fn parse_request(request: &[u8; 256], message_length: usize) -> Request {
+    let request = &request[0..message_length];
+
+    let header_section = String::from_utf8_lossy(request);
+
+    let mut lines = header_section.lines();
+    let first_line = lines.next().unwrap();
+    let mut parts = first_line.split_whitespace();
+    let method = parts.next().unwrap().to_owned();
+    let path = parts.next().unwrap().to_owned();
+    let http_version = parts.next().unwrap().to_owned();
+
+    let mut headers = Vec::new();
+
+    let mut parsing_headers = true;
+    let mut content_length: Option<usize> = None;
+    let mut content = String::new();
+    for line in lines {
+        if parsing_headers {
+            if line.is_empty() {
+                parsing_headers = false;
+            } else {
+                if line.starts_with("Content-Length") {
+                    content_length = line.split(":").collect::<Vec<&str>>()[1]
+                        .trim()
+                        .parse::<usize>()
+                        .ok();
+                }
+                headers.push(line.to_owned());
+            }
+        } else if content_length.is_some() {
+            content.push_str(line);
+        }
+    }
+
+    return Request {
+        method,
+        headers,
+        path,
+        http_version,
+        content: content.to_owned(),
+    };
+}
+
+#[allow(dead_code)]
+struct Request {
+    method: String,
+    headers: Vec<String>,
+    path: String,
+    http_version: String,
+    content: String,
+}
+
+struct Response {
+    status_code: u16,
+    headers: Vec<String>,
+    body: String,
+}
+
+impl Display for Response {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut response = format!("HTTP/1.1 {}\r\n", self.status_code);
+        self.headers.iter().for_each(|header| {
+            response.push_str(&format!("{}\r\n", header));
+        });
+        response.push_str("\r\n");
+        response.push_str(&self.body);
+        return write!(f, "{}", response);
     }
 }
