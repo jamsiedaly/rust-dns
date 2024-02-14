@@ -33,6 +33,11 @@ impl From<Args> for SocketAddr {
 async fn main() {
     let args = Args::parse();
     let resolver: SocketAddr = args.into();
+    let connection = sqlite::open(":memory:").unwrap();
+    let query = "
+        CREATE TABLE queries (query TEXT, time TEXT);
+    ";
+    connection.execute(query).unwrap();
 
     let udp_socket = UdpSocket::bind("127.0.0.1:2053")
         .await
