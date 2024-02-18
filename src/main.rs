@@ -62,15 +62,21 @@ async fn main() {
                             let message = parse_request(&buf, message_length);
 
                             if message.path == "/" {
+                                let request_count: i64 = connection
+                                    .prepare("SELECT COUNT(*) FROM queries")
+                                    .unwrap()
+                                    .read(0)
+                                    .unwrap();
+
+                                let response_body = format!("There have been {} requests", request_count);
                                 let response = Response {
                                     status_code: 200,
                                     headers: vec![
                                         "Content-Type: text/plain".to_owned(),
-                                        "Content-Length: 12".to_owned(),
+                                        format!("Content-Length: {}", response_body.len()),
                                     ],
-                                    body: "Hello world!".to_owned(),
+                                    body: response_body,
                                 };
-
                                 stream.write(response.to_string().as_bytes()).unwrap();
                             }
                         }
